@@ -3,7 +3,7 @@
 
 # FireREST
 
-FireREST is a python library to interface with Cisco Firepower Management Center REST API. The goal of FireREST is to provide a simple SDK to programmatically interact with FMC.
+FireREST is a python library to interface with Cisco Firepower Management Center REST API. The goal of FireREST is to provide a simple SDK to programmatically interact with FMC or Cloud-delivered FMC (cdFMC) in Cisco Defense Orchestrator.
 
 
 ## Features
@@ -15,6 +15,7 @@ FireREST is a python library to interface with Cisco Firepower Management Center
 * Detailed logging of api requests and responses
 * API specific error handling using various custom exceptions for typical errors (e.g. ResourceAlreadyExists, UnprocessAbleEntityError, ...)
 * Support for resource lookup by name instead of uuid for all CRUD operations
+* Support for cdFMC in CDO
 
 ## Requirements
 
@@ -30,13 +31,20 @@ FireREST is a python library to interface with Cisco Firepower Management Center
 
 ### Import api client
 
+For stand-alone FMC:
+
 ```python
 from fireREST import FMC
 ```
+For Cloud-delivered FMC in CDO:
 
-### Authentication
+```python
+from fireREST import cdFMC
+```
 
-FireREST uses basic authentication. In case your authentication token times out, the api client will automatically refresh the session and retry
+### FMC Authentication
+
+FMC uses basic authentication. In case your authentication token times out, the api client will automatically refresh the session and retry
 a failed operation. If all 3 refresh tokens have been used up the connection object will try to re-authenticate again automatically.
 
 ```python
@@ -44,6 +52,18 @@ fmc = FMC(hostname='fmc.example.com', username='firerest', password='Cisco123', 
 ```
 
 > **_NOTE:_**  By default domain is set to `Global`
+
+### cdFMC Authentication
+
+cdFMC uses API tokens created within the CDO management UI. It is recommended that you create an API-only user and use that token with fireREST. Never include the token in code, but rather load it from file or an environment variable at run-time.
+
+```python
+fmc = cdFMC(token=MY_TOKEN, region='eu')
+```
+`region` should be one of: `us`, `eu`, or `apj` as appropriate for your CDO account.
+
+> **_NOTE:_**  By default region is set to `us`
+
 
 ### CRUD Operations
 
