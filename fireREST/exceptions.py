@@ -68,3 +68,6 @@ class ResourceAlreadyExistsError(GenericApiError):
 
 class DomainNotFoundError(GenericApiError):
     """FMC domain could not be found"""
+
+class cdFMCNotFoundError(GenericApiError):
+    """cdFMC hostname could not be found"""

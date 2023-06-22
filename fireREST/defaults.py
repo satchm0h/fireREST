@@ -29,6 +29,12 @@ API_CONFIG_NAME = 'config'
 #: url used to access threat intelligence director related api calls
 API_TID_URL = '/api/fmc_tid/v1'
 
+#: CDO url used to discover the cdFMC hostname
+API_CDO_CDFMC_URL = '/aegis/rest/v1/services/targets/devices?q=deviceType:FMCE'
+
+#: url used to discover domains
+API_DOMAIN_URL = '/api/fmc_platform/v1/info/domain'
+
 #: content type. as of 6.6.0 FMC only supports json
 API_CONTENT_TYPE = 'application/json'
 
@@ -52,6 +58,14 @@ API_REFRESH_COUNTER_MAX = 3
 
 #: max size of api payload in bytes
 API_PAYLOAD_SIZE_MAX = 2048000
+
+#: default CDO cloud region for cdFMC
+API_CLOUD_REGION = 'us'
+
+#: CDO cloud region domains
+API_CDO_US = "www.defenseorchestrator.com"
+API_CDO_EU = "www.defenseorchestrator.eu"
+API_CDO_APJ = "apj.cdo.cisco.com"
 
 # software releases
 API_RELEASE_610 = '6.1.0'

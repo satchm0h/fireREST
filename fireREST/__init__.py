@@ -5,7 +5,7 @@ import logging
 from fireREST import defaults
 from fireREST import exceptions as exc
 from fireREST import utils
-from fireREST.fmc import Connection, Resource
+from fireREST.fmc import Connection, cdConnection, Resource
 from fireREST.fmc.assignment import Assignment
 from fireREST.fmc.audit import Audit
 from fireREST.fmc.chassis import Chassis
@@ -43,6 +43,40 @@ class FMC:
         dry_run=defaults.DRY_RUN,
     ):
         self.conn = Connection(hostname, username, password, protocol, verify_cert, domain, timeout, dry_run)
+        self.domain = self.conn.domain
+        self.version = self.conn.version
+        self.assignment = Assignment(self.conn)
+        self.audit = Audit(self.conn)
+        self.chassis = Chassis(self.conn)
+        self.deployment = Deployment(self.conn)
+        self.device = Device(self.conn)
+        self.devicecluster = DeviceCluster(self.conn)
+        self.devicegroup = DeviceGroup(self.conn)
+        self.devicehapair = DeviceHAPair(self.conn)
+        self.health = Health(self.conn)
+        self.integration = Integration(self.conn)
+        self.intelligence = Intelligence(self.conn)
+        self.job = Job(self.conn)
+        self.netmap = NetMap(self.conn)
+        self.object = Object(self.conn)
+        self.policy = Policy(self.conn)
+        self.system = System(self.conn)
+        self.troubleshoot = Troubleshoot(self.conn)
+        self.update = Update(self.conn)
+        self.user = User(self.conn)
+
+class cdFMC:
+    def __init__(
+        self,
+        token: str,
+        region: str,
+        protocol=defaults.API_PROTOCOL,
+        verify_cert=True,
+        domain=defaults.API_DEFAULT_DOMAIN,
+        timeout=defaults.API_REQUEST_TIMEOUT,
+        dry_run=defaults.DRY_RUN,
+    ):
+        self.conn = cdConnection(token, region, protocol, verify_cert, domain, timeout, dry_run)
         self.domain = self.conn.domain
         self.version = self.conn.version
         self.assignment = Assignment(self.conn)

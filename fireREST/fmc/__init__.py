@@ -117,7 +117,7 @@ class Connection:
                 method=method,
                 url=url,
                 params=params,
-                data=json.dumps(data),
+                data=json.dumps(data) if data else None,
                 auth=auth,
                 headers=self.headers,
                 timeout=self.timeout,
@@ -621,3 +621,106 @@ class NestedChildResource(ChildResource):
         url = self.url(self.PATH.format(container_uuid=container_uuid, child_container_uuid=child_container_uuid,
                                         uuid=uuid))
         return self.conn.delete(url)
+
+class cdConnection(Connection):
+
+    """API Connection object used to interact with Cloud-delivered Firepower Management Center REST API"""
+
+    def __init__(
+        self,
+        token: str,
+        region=defaults.API_CLOUD_REGION,
+        protocol=defaults.API_PROTOCOL,
+        verify_cert=True,
+        domain=defaults.API_DEFAULT_DOMAIN,
+        timeout=defaults.API_REQUEST_TIMEOUT,
+        dry_run=defaults.DRY_RUN,
+    ):
+        """Initialize connection object. It is highly recommended to use a
+        dedicated user for api operations
+
+        :param token: CDO API token
+        :type token: str
+        :param region: username used for api authentication
+        :type username: str
+        :param protocol: protocol used to access fmc rest api. Defaults to `https`
+        :type protocol: str, optional
+        :param verify_cert: check https certificate for validity. Defaults to `False`
+        :type verify_cert: bool, optional
+        :param domain: name of the domain to access. Defaults to `Global`
+        :type domain: str
+        :param timeout: timeout value for http requests. Defaults to `120` seconds
+        :type timeout: int, optional
+        :param dry_run: only log POST,PUT and DELETE api calls
+        :type dry_run: bool, optional
+        """
+        if not verify_cert:
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        self.headers = {
+            'Content-Type': defaults.API_CONTENT_TYPE,
+            'Accept': defaults.API_CONTENT_TYPE,
+            'User-Agent': defaults.API_USER_AGENT,
+            'Authorization': f'Bearer {token}'
+        }
+        self.protocol = protocol
+        self.refresh_counter = defaults.API_REFRESH_COUNTER_INIT
+        self.timeout = timeout
+        self.dry_run = dry_run
+        self.session = requests.Session()
+        self.verify_cert = verify_cert
+        self.cdo_host = self.resolve_cdo_host(region)
+        logger.debug(f"CDO host: {self.cdo_host}")
+        self.hostname = self.get_hostname()
+        logger.debug(f"cdFMC host: {self.hostname}")
+        self.domains = self.get_domains()
+        self.domain = {'id': self.get_domain_id(domain), 'name': domain}
+        self.version = self.get_version()
+
+    def get_hostname(self):
+        url = f'{self.protocol}://{self.cdo_host}{defaults.API_CDO_CDFMC_URL}'
+        payload = self._request('get', url).json()
+        if 'host' in payload[0]:
+            return payload[0]['host']
+        else:
+            error = f"Unable to locate cdFMC in tenant"
+            logger.error(error)
+            raise exc.cdFMCNotFoundError(error, payload)
+                
+    def resolve_cdo_host(self, region: str):
+        """Set the CDO api host based on the region of the CDO deployment"""
+        logger.debug(f"Resolve cdo host region: {region.lower()}")
+        if region.lower() == "us":
+            return defaults.API_CDO_US
+        elif region.lower() == "eu":
+            return defaults.API_CDO_EU
+        elif region.lower() == "apj":
+            return defaults.API_CDO_APJ
+        else:
+            error = f'Invalid region provided: {region}'
+            logger.error(error)
+            raise exc.UnprocessableEntityError(error)
+
+    def get_domains(self):
+        """
+        Use the new domains API to determine the list of domains
+        Note that there should only be one domain on the cdFMC
+        """
+        rval = dict()
+        url = f'{self.protocol}://{self.hostname}{defaults.API_DOMAIN_URL}'
+        payload = self._request('get', url).json()
+        if 'items' in payload:
+            return payload['items']
+        
+        error = "No domains detected"
+        logger.error(error)
+        raise exc.DomainNotFoundError(error, payload)            
+
+    # CDO uses persistent API tokens no need to refresh
+    def login(self):
+        return
+
+    # CDO uses peristent API tokens no refresh required
+    def refresh(self):
+        return
+
+  
